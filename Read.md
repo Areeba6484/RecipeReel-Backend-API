@@ -14,13 +14,13 @@ Includes authentication, ratings, and more.
 - **Role-based Access** – Admin and regular user permissions  
 - **MongoDB Database** – Well-structured collections for scalable data handling  
 
----
 
-##🛠 Tech Stack
+
+## 🛠 Tech Stack
 - **Node.js** – Server runtime  
 - **Express.js** – API framework  
 - **MongoDB** – Database 
----
+
 
 ## ⚙ Environment Variables
 Create a `.env` file in the project root with the following:
@@ -30,15 +30,15 @@ PORT=5000
 HOST=localhost
 DB_HOST=localhost
 MONGODB_URI="mongodb://localhost:27017/backend_api_db_nxb_dev"
-WEBAPP_URL="http://localhost:8081"
+WEBAPP_URL="http://localhost:8081" ```
 
-## ▶ How to Run
-npm run dev  # Start in development mode (with nodemon)
-npm start  # Start in production mode
+ ▶ How to Run
+`npm run dev`  # Start in development mode (with nodemon)
+`npm start`  # Start in production mode
 
-## 📌 Example Endpoint
+📌 Example Endpoint
+
 Get all users:
+`GET localhost:5000/users`
 
-GET localhost:5000/users
-
-<p align="center"> <b><i>🍴 This API was cooked with love, sprinkled with validations, and garnished with MongoDB queries.
+ 🍴 This API is cooked with love, sprinkled with validations, and garnished with MongoDB queries.
