@@ -30,15 +30,15 @@ PORT=5000
 HOST=localhost
 DB_HOST=localhost
 MONGODB_URI="mongodb://localhost:27017/backend_api_db_nxb_dev"
-WEBAPP_URL="http://localhost:8081" ```
+WEBAPP_URL="http://localhost:8081" 
 
  ▶ How to Run
-`npm run dev`  # Start in development mode (with nodemon)
-`npm start`  # Start in production mode
+npm run dev  # Start in development mode (with nodemon)
+npm start  # Start in production mode
 
 📌 Example Endpoint
 
 Get all users:
-`GET localhost:5000/users`
+GET localhost:5000/users
 
  🍴 This API is cooked with love, sprinkled with validations, and garnished with MongoDB queries.
