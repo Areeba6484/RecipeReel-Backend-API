@@ -43,7 +43,7 @@ const recipesSchema = new Schema({
       message: "Category must be a non-empty string",
     },
   },
-  authorId: {
+  user: {
     type: Schema.Types.ObjectId,
     ref: "User"
   },

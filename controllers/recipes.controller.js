@@ -1,72 +1,91 @@
 import Recipes from "../models/recipes.model.js";
 
-// Create a new recipe
-let createRecipes = async (req, res) => {
-  try {
-    const { title, description, time, rating, ingredients, instructions, category } = req.body;
-
-    if (!title || !description || !time || rating === undefined || !ingredients || !instructions || !category) {
-      return res.status(400).json({
-        message: "All required fields must be provided",
-        data: null,
-        error: "Missing required fields",
-      });
-    }
-
-    if (!Array.isArray(ingredients) || ingredients.length === 0 || !Array.isArray(instructions) || instructions.length === 0) {
-      return res.status(400).json({
-        message: "Ingredients and instructions must be non-empty arrays",
-        data: null,
-        error: "Invalid ingredients or instructions",
-      });
-    }
-
-    const newRecipe = new Recipes({ title, description, time, rating, ingredients, instructions, category });
-    await newRecipe.save();
-
-    res.status(201).json({
-      message: "Recipe created successfully",
-      data: newRecipe,
-      error: null,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Internal server error", data: null, error: error.message });
-  }
-};
-
-// Get all recipes
-let getRecipes = async (req, res) => {
+ const getRecipes = async (req, res) => {
   try {
     const recipes = await Recipes.find()
+      .populate("user", "name email role") // Populate user info
+      .populate("reviews", "recipe user comment rating");
 
-    res.status(200).json({ message: "Recipes fetched successfully", data: recipes, error: null });
+    res.status(200).json({
+      message: "Recipes fetched successfully",
+      data: recipes,
+      error: false
+    });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error", data: null, error: error.message });
+    res.status(500).json({
+      message: "Error fetching recipes",
+      data: null,
+      error: error.message
+    });
   }
 };
 
-// Get recipe by ID
-let getRecipesbyId = async (req, res) => {
+ const getRecipesbyId = async (req, res) => {
   try {
-    let id = req.params.id;
-    const recipe = await Recipes.findById(id);
+    const recipe = await Recipes.findById(req.params.id)
+      .populate("user", "name email role")
+      .populate({
+        path: "reviews",
+       
+      });
+
     if (!recipe) {
       return res.status(404).json({
         message: "Recipe not found",
         data: null,
-        error: "Recipe not found",
+        error: true
       });
     }
+
     res.status(200).json({
       message: "Recipe fetched successfully",
       data: recipe,
-      error: null,
+      error: false
     });
   } catch (error) {
     res.status(500).json({
-      message: "Internal server error",
+      message: "Error fetching recipe",
       data: null,
-      error: error.message,
+      error: error.message
+    });
+  }
+};
+// Create a new recipe
+
+let createRecipes = async (req, res) => {
+  try {
+    const { title, description, time, rating, category, user, ingredients, instructions } = req.body;
+
+    if (!title || !description || !time || rating === undefined || !category || !ingredients || !instructions) {
+      return res.status(400).json({
+        message: "All required fields must be provided",
+        data: null,
+        error: true
+      });
+    }
+
+    const recipe = new Recipes({
+      title,
+      description,
+      time,
+      rating,
+      category,
+      user,
+      ingredients,
+      instructions
+    });
+
+    const savedRecipe = await recipe.save();
+    res.status(201).json({
+      message: "Recipe created successfully",
+      data: savedRecipe,
+      error: false
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error creating recipe",
+      data: null,
+      error: error.message
     });
   }
 };

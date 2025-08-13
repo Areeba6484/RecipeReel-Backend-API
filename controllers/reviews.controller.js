@@ -1,47 +1,85 @@
 import Review from "../models/reviews.models.js";
 
 
-// Get all reviews
+
 export const getAllReviews = async (req, res) => {
   try {
-    const reviews = await Review.find();
-    res.status(200).json({ message: "All reviews fetched", data: reviews, error: null });
+    const reviews = await Review.find()
+      .populate("recipe", "title category") // Populate recipe info
+      .populate("user", "name email role"); // Populate user info
+
+    res.status(200).json({
+      message: "Reviews fetched successfully",
+      data: reviews,
+      error: false
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching reviews", data: null, error: error.message });
-  }
-};
-
-// Get review by ID
-export const getReviewById = async (req, res) => {
-  try {
-    const review = await Review.findById(req.params.id);
-    if (!review) {
-      return res.status(404).json({ message: "Review not found", data: null, error: "Not Found" });
-    }
-    res.status(200).json({ message: "Review found", data: review, error: null });
-  } catch (error) {
-    res.status(500).json({ message: "Error finding review", data: null, error: error.message });
-  }
-};
-
-// Create a review
-export const createReview = async (req, res) => {
-  const { recipeId, userId, rating, comment, reactions } = req.body;
-
-  if (!recipeId || !userId || !rating || !comment) {
-    return res.status(400).json({
-      message: "Validation error",
+    res.status(500).json({
+      message: "Error fetching reviews",
       data: null,
-      error: "recipeId, userId, rating, and comment are required"
+      error: error.message
     });
   }
+};
 
+export const getReviewById = async (req, res) => {
   try {
-    const newReview = new Review({ recipeId, userId, rating, comment, reactions });
-    await newReview.save();
-    res.status(201).json({ message: "Review created", data: newReview, error: null });
+    const review = await Review.findById(req.params.id)
+      .populate("recipe", "title category")
+      .populate("user", "name email role");
+
+    if (!review) {
+      return res.status(404).json({
+        message: "Review not found",
+        data: null,
+        error: true
+      });
+    }
+
+    res.status(200).json({
+      message: "Review fetched successfully",
+      data: review,
+      error: false
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error creating review", data: null, error: error.message });
+    res.status(500).json({
+      message: "Error fetching review",
+      data: null,
+      error: error.message
+    });
+  }
+};
+export const createReview = async (req, res) => {
+  try {
+    const { recipe, user, rating, comment, reactions } = req.body;
+    if (!recipe || !user || rating === undefined || !comment) {
+      return res.status(400).json({
+        message: "All required fields must be provided",
+        data: null,
+        error: true
+      });
+    }
+
+    const review = new Review({
+      recipe,
+      user,
+      rating,
+      comment,
+      reactions
+    });
+
+    const savedReview = await review.save();
+    res.status(201).json({
+      message: "Review created successfully",
+      data: savedReview,
+      error: false
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error creating review",
+      data: null,
+      error: error.message
+    });
   }
 };
 
@@ -58,7 +96,10 @@ export const deleteAllReviews = async (req, res) => {
 // Delete review by ID
 export const deleteReviewById = async (req, res) => {
   try {
-    const deletedReview = await Review.findByIdAndDelete(req.params.id);
+    const deletedReview = await Review.findByIdAndDelete(req.params.id)
+      .populate("recipe")
+      .populate("user");
+
     if (!deletedReview) {
       return res.status(404).json({ message: "Review not found", data: null, error: "Not Found" });
     }
@@ -68,6 +109,7 @@ export const deleteReviewById = async (req, res) => {
   }
 };
 
+// Update review by ID
 export const updateReviewById = async (req, res) => {
   const { id } = req.params;
   const updates = {};
@@ -80,7 +122,9 @@ export const updateReviewById = async (req, res) => {
       id,
       updates,
       { new: true, runValidators: true }
-    );
+    )
+      .populate("recipe")
+      .populate("user");
 
     if (!updatedReview) {
       return res.status(404).json({ message: "Review not found", data: null, error: "Not Found" });
@@ -91,4 +135,3 @@ export const updateReviewById = async (req, res) => {
     res.status(400).json({ message: "Validation error", data: null, error: error.message });
   }
 };
-
