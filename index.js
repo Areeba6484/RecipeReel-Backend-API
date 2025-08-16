@@ -21,9 +21,9 @@ app.use(morgan("common"));
 
 
 app.use("/", categoryRouter);
-app.use("/", userRouter)
 app.use("/", recipeRouter);
 app.use("/reviews", reviewRouter);
+app.use("/", userRouter);
 
 dbConnect();
 

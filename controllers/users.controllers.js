@@ -1,38 +1,10 @@
 import User from "../models/users.models.js";
-
-// Create a new user
-export const createUsers = async (req, res) => {
-  const { name, email, password, role, bio } = req.body;
-
-  if (!name || !email || !password) {
-    return res.status(400).json({
-      message: "Missing required fields",
-      data: null,
-      error: "Name, email, and password are required",
-    });
-  }
-
-  try {
-    const user = new User({ name, email, password, role, bio });
-    await user.save();
-    res.status(201).json({
-      message: "User created successfully",
-      data: user,
-      error: null,
-    });
-  } catch (error) {
-    res.status(400).json({
-      message: "Failed to create user",
-      data: null,
-      error: error.message,
-    });
-  }
-};
-
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 // Get all users
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const users = await User.find();
     res.status(200).json({
       message: "Users fetched successfully",
       data: users,
@@ -47,30 +19,201 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-// Get single user by ID
-export const getUsersById = async (req, res) => {
+// SIGNUP
+export const signupUsers = async (req, res) => {
+  const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    return res.status(400).json({
+      message: "Missing required fields",
+      data: null,
+      error: "name, email, and password are required",
+    });
+  }
+
   try {
-    const user = await User.findById(req.params.id).select("-password");
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
+    // Check if user already exists
+    const userExists = await User.findOne({ email: email.toLowerCase() });
+    if (userExists) {
+      return res.status(400).json({
+        message: "Validation errors",
         data: null,
-        error: "Invalid ID",
+        error: "User with this email already exists.",
       });
     }
-    res.status(200).json({
-      message: "User fetched successfully",
-      data: user,
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user
+    const user = new User({
+      name,
+      email: email.toLowerCase(),
+      password: hashedPassword,
+    });
+
+    await user.save();
+
+    res.status(201).json({
+      message: "User created successfully",
+      data: {
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        address: user.address,
+        profilePicture: user.profilePicture,
+        bio: user.bio,
+        recipeCount: user.recipeCount,
+        userType: user.userType,
+        isVerified: user.isVerified,
+      },
       error: null,
     });
   } catch (error) {
-    res.status(400).json({
-      message: "Failed to get user",
+    res.status(500).json({
+      message: "Failed to create user",
       data: null,
       error: error.message,
     });
   }
 };
+
+// LOGIN
+export const loginUsers = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Missing required fields",
+        data: null,
+        error: "Email and password are required",
+      });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+        data: null,
+        error: "Invalid email",
+      });
+    }
+
+    // Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Authentication failed",
+        data: null,
+        error: "Invalid email or password",
+      });
+    }
+
+    let token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN,
+    });
+
+    res.status(200).json({
+      message: "User logged in successfully",
+      data: {
+        token: token,
+        user: {
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          status: user.status,
+          address: user.address,
+          profilePicture: user.profilePicture,
+          bio: user.bio,
+          recipeCount: user.recipeCount,
+          userType: user.userType,
+          isVerified: user.isVerified,
+        },
+
+      },
+      error: null,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to login",
+      data: null,
+      error: error.message,
+    });
+  }
+};
+
+
+export const changePassword = async (req, res) => {
+let userId = req.user.id;
+
+  const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        message: "Missing required fields",
+        data: null,
+        error: "oldPassword, newPassword, and confirmPassword are required",
+      });
+    }
+    if (oldPassword === newPassword) {
+      return res.status(400).json({
+        message: "New password must be different from old password",
+        data: null,
+        error: "New password and old password must not match",
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        message: "Passwords do not match",
+        data: null,
+        error: "New password and confirm password must match",
+      });
+    }
+
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+          data: null,
+          error: "Invalid user ID",
+        });
+      }
+
+      // ✅ Compare oldPassword with stored hashed password
+      const isMatch = await bcrypt.compare(oldPassword, user.password);
+      if (!isMatch) {
+        return res.status(401).json({
+          message: "Change password failed",
+          data: null,
+          error: "Invalid old password",
+        });
+      }
+
+      // ✅ Hash new password before saving
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+      user.password = hashedNewPassword;
+
+      await user.save();
+
+      return res.status(200).json({
+        message: "Password changed successfully",
+        data: null,
+        error: null,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: "Failed to change password",
+        data: null,
+        error: error.message,
+      });
+    }
+  };
+
 
 // Update user by ID
 export const updateUsers = async (req, res) => {
@@ -80,7 +223,6 @@ export const updateUsers = async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     ).select("-password");
-
     if (!updatedUser) {
       return res.status(404).json({
         message: "User not found",
@@ -88,7 +230,6 @@ export const updateUsers = async (req, res) => {
         error: "Invalid ID",
       });
     }
-
     res.status(200).json({
       message: "User updated successfully",
       data: updatedUser,

@@ -4,11 +4,15 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "User name is required"],
+      // required: [true, "User name is required"],
     },
-    role: {
+    userType: {
       type: String,
-      required: [true, "Role is required"],
+      enum: {
+        values: ["user", "admin", "chef"],
+        message: "UserType must be either 'user' or 'admin' , 'chef'",
+      },
+      default: "user",
     },
     bio: {
       type: String,
@@ -23,10 +27,12 @@ const userSchema = new mongoose.Schema(
       required: [true, "Email is required"],
       unique: true,
       lowercase: true,
-      match: [
-        /^\S+@\S+\.\S+$/,
-        "Please provide a valid email address",
-      ],
+      validate: {
+        validator: function (v) {
+          return /^\S+@\S+\.\S+$/.test(v);
+        },
+        message: "Please provide a valid email address",
+      },
     },
     password: {
       type: String,
@@ -39,11 +45,26 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    userType: {
+    profilePicture: {
+      type: String,
+      default: "default.jpg",
+    },
+    address: {
+      type: String
+    },
+    status: {
+      type: String,
+      enum: {
+        values: ["active", "inactive"],
+        message: "Status must be either 'active' or 'inactive'",
+      },
+      default: "active",
+    },
+    role: {
       type: String,
       enum: {
         values: ["user", "admin"],
-        message: "User type must be either 'user' or 'admin'",
+        message: "Role must be either 'user' or 'admin'",
       },
       default: "user",
     },
