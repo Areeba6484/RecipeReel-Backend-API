@@ -6,6 +6,7 @@ import userRouter from './routs/users.routs.js';
 import categoryRouter from './routs/category.routs.js';
 import reviewRouter from './routs/reviews.routs.js';
 import dbConnect from './config/database.js';
+import { apiRateLimit } from './middlewares/api-limit.js';
 
 var corsOptions = {
   origin: process.env.WEBAPP_URL,
@@ -23,7 +24,7 @@ app.use(morgan("common"));
 app.use("/", categoryRouter);
 app.use("/", recipeRouter);
 app.use("/reviews", reviewRouter);
-app.use("/", userRouter);
+app.use("/",apiRateLimit, userRouter);
 
 dbConnect();
 
