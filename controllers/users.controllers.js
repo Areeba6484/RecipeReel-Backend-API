@@ -18,6 +18,34 @@ export const getAllUsers = async (req, res) => {
     });
   }
 };
+// ✅ Get logged-in user's profile
+export const getProfile = async (req, res) => {
+  try {
+    const userId = req.user.id; // comes from token (auth middleware)
+
+    const user = await User.findById(userId).select("-password"); // exclude password
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+        data: null,
+        error: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      message: "Profile fetched successfully",
+      data: user,
+      error: null,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch profile",
+      data: null,
+      error: error.message,
+    });
+  }
+};
+
 
 // SIGNUP
 export const signupUsers = async (req, res) => {
@@ -44,12 +72,17 @@ export const signupUsers = async (req, res) => {
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpired = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
 
     // Create new user
     const user = new User({
       name,
       email: email.toLowerCase(),
       password: hashedPassword,
+      otp: otp,
+      otpExpired: otpExpired,
+      active: false
     });
 
     await user.save();
@@ -110,8 +143,17 @@ export const loginUsers = async (req, res) => {
         error: "Invalid email or password",
       });
     }
+    if (user.status ===  "inactive"){
+      return res.status(403).json({
+        message: "Account is inactive",
+        data: null,
+        error: "Please contact support.",
+      });
+    }
 
-    let token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    let token = jwt.sign({ id: user._id,
+      role: user.role
+     }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN,
     });
 

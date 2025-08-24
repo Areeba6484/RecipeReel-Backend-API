@@ -3,8 +3,8 @@ import Recipes from "../models/recipes.model.js";
  const getRecipes = async (req, res) => {
   try {
     const recipes = await Recipes.find()
-      .populate("user", "name email role") // Populate user info
-      .populate("reviews", "recipe user comment rating");
+      .populate("userId", "name email role") // Populate user info
+      .populate("reviewsId", "recipe user comment rating");
 
     res.status(200).json({
       message: "Recipes fetched successfully",
@@ -23,10 +23,10 @@ import Recipes from "../models/recipes.model.js";
  const getRecipesbyId = async (req, res) => {
   try {
     const recipe = await Recipes.findById(req.params.id)
-      .populate("user", "name email role")
+      .populate("userId", "name email role")
       .populate({
-        path: "reviews",
-       
+        path: "reviewsId",
+
       });
 
     if (!recipe) {
@@ -54,7 +54,7 @@ import Recipes from "../models/recipes.model.js";
 
 let createRecipes = async (req, res) => {
   try {
-    const { title, description, time, rating, category, user, ingredients, instructions } = req.body;
+    const { title, description, time, rating, category, ingredients, instructions } = req.body;
 
     if (!title || !description || !time || rating === undefined || !category || !ingredients || !instructions) {
       return res.status(400).json({
@@ -63,7 +63,7 @@ let createRecipes = async (req, res) => {
         error: true
       });
     }
-
+let user=req.user;
     const recipe = new Recipes({
       title,
       description,
@@ -72,7 +72,8 @@ let createRecipes = async (req, res) => {
       category,
       user,
       ingredients,
-      instructions
+      instructions,
+      userId: user.id
     });
 
     const savedRecipe = await recipe.save();
@@ -94,6 +95,9 @@ let createRecipes = async (req, res) => {
 let updateRecipes = async (req, res) => {
   try {
     const id = req.params.id;
+    let recipeData = req.body;
+    let user = req.user;
+    let userId = user.id;
     const { title, description, time, rating, ingredients, instructions, category } = req.body;
 
     if (!id) {
@@ -104,13 +108,14 @@ let updateRecipes = async (req, res) => {
       return res.status(400).json({ message: "At least one field must be provided to update", data: null, error: "No fields to update" });
     }
 
-    const updatedRecipe = await Recipes.findByIdAndUpdate(id, req.body, { new: true });
+    const Recipe = await Recipes.findOneAndUpdate({ _id: id, userId: userId }, recipeData, { new: true });
+    console.log(Recipe);
 
-    if (!updatedRecipe) {
-      return res.status(404).json({ message: "Recipe not found", data: null, error: "Recipe not found" });
+    if (!Recipe) {
+      return res.status(400).json({ message: "Recipe cannot be updated or not owned by user.", data: null, error: null });
     }
 
-    res.status(200).json({ message: "Recipe updated successfully", data: updatedRecipe, error: null });
+    res.status(200).json({ message: "Recipe updated successfully", data: Recipe, error: null });
   } catch (error) {
     res.status(500).json({ message: "Internal server error", data: null, error: error.message });
   }
@@ -124,14 +129,15 @@ let deleteRecipesbyId = async (req, res) => {
     if (!id) {
       return res.status(400).json({ message: "Recipe ID is required", data: null, error: "Missing ID" });
     }
+    let user = req.user;
 
-    const recipe = await Recipes.findByIdAndDelete(id);
-
-    if (!recipe) {
-      return res.status(404).json({ message: "Recipe not found", data: null, error: "Recipe not found" });
+    const recipe = await Recipes.deleteOne({ _id: id, userId: user.id });
+    if (recipe.deletedCount === 0) {
+      return res.status(404).json({ message: "Recipe not found or not own by user.", data: null, error: "Recipe not found or not own by user." });
     }
-
-    res.status(200).json({ message: "Recipe deleted successfully", data: recipe, error: null });
+    if (recipe.deletedCount ===  1) {
+      res.status(200).json({ message: "Recipe deleted successfully", data: recipe, error: null });
+    }
   } catch (error) {
     res.status(500).json({ message: "Internal server error", data: null, error: error.message });
   }

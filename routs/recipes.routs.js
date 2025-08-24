@@ -7,14 +7,16 @@ import {
   createRecipes,
   updateRecipes
 } from "../controllers/recipes.controller.js";
+import {verifyAdmin,verifyToken} from "../middlewares/auth.js";
 
 const recipeRouter = express.Router();
 
 recipeRouter.get("/recipes", getRecipes);
 recipeRouter.get("/recipes/:id", getRecipesbyId);
-recipeRouter.post("/recipes", createRecipes);
-recipeRouter.put("/recipes/:id", updateRecipes);
-recipeRouter.delete("/recipes", deleteAllRecipes);
-recipeRouter.delete("/recipes/:id", deleteRecipesbyId);
+recipeRouter.post("/recipes", verifyToken, createRecipes);
+recipeRouter.put("/recipes/:id", verifyToken,updateRecipes);
+recipeRouter.delete("/recipes/:id", verifyToken, deleteRecipesbyId);
+recipeRouter.delete("/recipes",  deleteAllRecipes);
+
 
 export default recipeRouter;
