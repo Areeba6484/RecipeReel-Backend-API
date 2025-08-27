@@ -1,4 +1,4 @@
-# 🏨 HostelValy Backend API
+# 🍲 RecipeReel Backend API
 
 
 This is the backend API for **Recipe App**, a sleek platform for exploring, sharing, and reviewing recipes.  
