@@ -255,16 +255,24 @@ let userId = req.user.id;
       });
     }
   };
-
-
 // Update user by ID
 export const updateUsers = async (req, res) => {
   try {
+    // Check if restricted fields are being updated
+    if (req.body.email || req.body.role) {
+      return res.status(400).json({
+        message: "You cannot update email or role",
+        data: null,
+        error: "Restricted fields: email, role",
+      });
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     ).select("-password");
+
     if (!updatedUser) {
       return res.status(404).json({
         message: "User not found",
@@ -272,6 +280,7 @@ export const updateUsers = async (req, res) => {
         error: "Invalid ID",
       });
     }
+
     res.status(200).json({
       message: "User updated successfully",
       data: updatedUser,
@@ -286,6 +295,7 @@ export const updateUsers = async (req, res) => {
   }
 };
 
+
 // Delete user by ID
 export const deleteUsers = async (req, res) => {
   try {
@@ -297,7 +307,6 @@ export const deleteUsers = async (req, res) => {
         error: "Invalid ID",
       });
     }
-
     res.status(200).json({
       message: "User deleted successfully",
       data: deletedUser,
@@ -311,6 +320,7 @@ export const deleteUsers = async (req, res) => {
     });
   }
 };
+
 // Delete all users
 export const deleteAllUsers = async (req, res) => {
   try {
