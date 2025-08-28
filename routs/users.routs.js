@@ -13,26 +13,21 @@ import { verifyAdmin, verifyToken } from "../middlewares/auth.js";
 
 const userRouter = express.Router();
 
-// Get all users
+//protected routes
 userRouter.get("/users", verifyToken, verifyAdmin, getAllUsers);
-
-// Get user by ID
 userRouter.get("/profile", verifyToken, getProfile);
 
-// Create a new user (Signup)
+//public routes
 userRouter.post("/register", signupUsers);
-
-// Login user
 userRouter.post("/login", loginUsers);
-
-// Update a user by ID
 userRouter.put("/users/:id", updateUsers);
+
+
+
 // Change password
 userRouter.put("/change-password/", verifyToken, changePassword);
-
 // Delete a user by ID
 userRouter.delete("/users/:id", deleteUsers);
-
 // Delete all users
 userRouter.delete("/users", deleteAllUsers);
 

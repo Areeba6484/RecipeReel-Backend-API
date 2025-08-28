@@ -7,25 +7,21 @@ import {
     deleteCategory,
     deleteAllCategories
 } from "../controllers/category.controller.js";
+import {verifyAdmin,verifyToken} from "../middlewares/auth.js";
 
 const categoryRouter = express.Router();
+//public routes
 
-// Create a new category (custom validation is inside controller)
-categoryRouter.post("/categories", createCategory);
-
-// Get all categories
 categoryRouter.get("/categories", getAllCategories);
-
-//  Get a single category by ID
 categoryRouter.get("/categories/:id", getCategoryById);
 
-//  Update a category by ID
-categoryRouter.put("/categories/:id", updateCategory);
+//protected routes
 
-// Delete a category by ID
-categoryRouter.delete("/categories/:id", deleteCategory);
+categoryRouter.post("/categories", verifyToken, verifyAdmin, createCategory);
+categoryRouter.put("/categories/:id", verifyToken, verifyAdmin, updateCategory);
+categoryRouter.delete("/categories/:id", verifyToken, verifyAdmin, deleteCategory);
 
 // Delete all categories
-categoryRouter.delete("/categories", deleteAllCategories);
+categoryRouter.delete("/categories", verifyToken, verifyAdmin, deleteAllCategories);
 
 export default categoryRouter;

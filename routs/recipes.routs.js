@@ -11,11 +11,16 @@ import {verifyAdmin,verifyToken} from "../middlewares/auth.js";
 
 const recipeRouter = express.Router();
 
+//public routes
 recipeRouter.get("/recipes", getRecipes);
 recipeRouter.get("/recipes/:id", getRecipesbyId);
+
+//protected routes
 recipeRouter.post("/recipes", verifyToken, createRecipes);
 recipeRouter.put("/recipes/:id", verifyToken,updateRecipes);
 recipeRouter.delete("/recipes/:id", verifyToken, deleteRecipesbyId);
+
+
 recipeRouter.delete("/recipes",  deleteAllRecipes);
 
 

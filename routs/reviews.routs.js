@@ -7,15 +7,18 @@ import {
   deleteAllReviews,
    updateReviewById
 } from "../controllers/reviews.controller.js";
+import {verifyAdmin,verifyToken} from "../middlewares/auth.js";
 
 const reviewRouter = express.Router();
 
 reviewRouter.get("/", getAllReviews);
 reviewRouter.get("/:id", getReviewById);
 reviewRouter.post("/", createReview);
-reviewRouter.put("/:id", updateReviewById )
-reviewRouter.delete("/:id", deleteReviewById);
-reviewRouter.delete("/", deleteAllReviews);
+//protected routes
 
+reviewRouter.put("/:id", verifyToken, updateReviewById);
+reviewRouter.delete("/:id", verifyToken, deleteReviewById);
+
+reviewRouter.delete("/", deleteAllReviews);
 
 export default reviewRouter;
