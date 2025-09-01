@@ -1,6 +1,7 @@
 import User from "../models/users.models.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import sendMail from "../utils/send mail.js";
 // Get all users
 export const getAllUsers = async (req, res) => {
   try {
@@ -49,13 +50,21 @@ export const getProfile = async (req, res) => {
 
 // SIGNUP
 export const signupUsers = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, confirmPassword } = req.body;
 
-  if (!name || !email || !password) {
+  if (!name || !email || !password || !confirmPassword) {
     return res.status(400).json({
       message: "Missing required fields",
       data: null,
-      error: "name, email, and password are required",
+      error: "name, email, password, and confirmPassword are required",
+    });
+  }
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({
+      message: "Validation errors",
+      data: null,
+      error: "Passwords do not match.",
     });
   }
 
@@ -72,8 +81,8 @@ export const signupUsers = async (req, res) => {
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpired = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
+    const otp = Math.floor(1000 + Math.random() * 9000).toString(); // 4 digit OTP
+    const otpExpired = new Date(Date.now() + 10 * 60 * 1000); // valid for 10 min
 
     // Create new user
     const user = new User({
@@ -86,6 +95,9 @@ export const signupUsers = async (req, res) => {
     });
 
     await user.save();
+
+
+    await sendMail(email, "Verify your email", otp);
 
     res.status(201).json({
       message: "User created successfully",
@@ -143,17 +155,18 @@ export const loginUsers = async (req, res) => {
         error: "Invalid email or password",
       });
     }
-    if (user.status ===  "inactive"){
+    if (user.status === "inactive") {
       return res.status(403).json({
         message: "Account is inactive",
         data: null,
-        error: "Please contact support.",
+        error: "Please verify your email.",
       });
     }
 
-    let token = jwt.sign({ id: user._id,
+    let token = jwt.sign({
+      id: user._id,
       role: user.role
-     }, process.env.JWT_SECRET, {
+    }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN,
     });
 
@@ -189,72 +202,121 @@ export const loginUsers = async (req, res) => {
 
 
 export const changePassword = async (req, res) => {
-let userId = req.user.id;
+  let userId = req.user.id;
 
   const { oldPassword, newPassword, confirmPassword } = req.body;
 
-    if (!oldPassword || !newPassword || !confirmPassword) {
-      return res.status(400).json({
-        message: "Missing required fields",
+  if (!oldPassword || !newPassword || !confirmPassword) {
+    return res.status(400).json({
+      message: "Missing required fields",
+      data: null,
+      error: "oldPassword, newPassword, and confirmPassword are required",
+    });
+  }
+  if (oldPassword === newPassword) {
+    return res.status(400).json({
+      message: "New password must be different from old password",
+      data: null,
+      error: "New password and old password must not match",
+    });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({
+      message: "Passwords do not match",
+      data: null,
+      error: "New password and confirm password must match",
+    });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
         data: null,
-        error: "oldPassword, newPassword, and confirmPassword are required",
+        error: "Invalid user ID",
       });
     }
-    if (oldPassword === newPassword) {
-      return res.status(400).json({
-        message: "New password must be different from old password",
+
+    // ✅ Compare oldPassword with stored hashed password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Change password failed",
         data: null,
-        error: "New password and old password must not match",
+        error: "Invalid old password",
       });
     }
 
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({
-        message: "Passwords do not match",
+    // ✅ Hash new password before saving
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password changed successfully",
+      data: null,
+      error: null,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to change password",
+      data: null,
+      error: error.message,
+    });
+  }
+};
+
+export const verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({
+      message: "Missing required fields",
+      data: null,
+      error: "Email and OTP are required",
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
         data: null,
-        error: "New password and confirm password must match",
+        error: "Invalid email",
       });
     }
 
-    try {
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({
-          message: "User not found",
-          data: null,
-          error: "Invalid user ID",
-        });
-      }
-
-      // ✅ Compare oldPassword with stored hashed password
-      const isMatch = await bcrypt.compare(oldPassword, user.password);
-      if (!isMatch) {
-        return res.status(401).json({
-          message: "Change password failed",
-          data: null,
-          error: "Invalid old password",
-        });
-      }
-
-      // ✅ Hash new password before saving
-      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-      user.password = hashedNewPassword;
-
-      await user.save();
-
-      return res.status(200).json({
-        message: "Password changed successfully",
+    // Check if OTP is valid
+    if (user.otp !== otp) {
+      return res.status(401).json({
+        message: "Invalid OTP",
         data: null,
-        error: null,
-      });
-    } catch (error) {
-      return res.status(500).json({
-        message: "Failed to change password",
-        data: null,
-        error: error.message,
+        error: "OTP does not match",
       });
     }
-  };
+
+    // OTP is valid, update user status
+    user.status = "active";
+    await user.save();
+
+    res.status(200).json({
+      message: "Email verified successfully",
+      data: null,
+      error: null,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to verify OTP",
+      data: null,
+      error: error.message,
+    });
+  }
+};
+
 // Update user by ID
 export const updateUsers = async (req, res) => {
   try {

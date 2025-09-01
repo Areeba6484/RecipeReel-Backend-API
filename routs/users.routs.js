@@ -7,7 +7,8 @@ import {
   updateUsers,
   changePassword,
   deleteUsers,
-  deleteAllUsers
+  deleteAllUsers,
+  verifyOTP
 } from "../controllers/users.controllers.js";
 import { verifyAdmin, verifyToken } from "../middlewares/auth.js";
 
@@ -21,6 +22,7 @@ userRouter.get("/profile", verifyToken, getProfile);
 userRouter.post("/register", signupUsers);
 userRouter.post("/login", loginUsers);
 userRouter.put("/users/:id", updateUsers);
+userRouter.post("/verify-otp", verifyOTP);
 
 
 

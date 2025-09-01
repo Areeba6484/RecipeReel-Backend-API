@@ -17,7 +17,7 @@ let verifyToken = (req, res, next) => {
                 return res.status(401).json({
                     message: "Authentication failed",
                     data: null,
-                    error: "Invalid token",
+                    error: "JWT expired",
                 });
             }
             req.user = decoded;
@@ -34,7 +34,7 @@ let verifyToken = (req, res, next) => {
 };
 
 
-const verifyAdmin = (req,res,next)=>{
+const verifyAdmin = (req, res, next) => {
     if (req.user.role !== "admin") {
         return res.status(403).json({
             message: "Forbidden",
