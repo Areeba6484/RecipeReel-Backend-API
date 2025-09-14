@@ -6,7 +6,7 @@ import {
   deleteRecipesbyId,
   createRecipes,
   updateRecipes
-} from "../controllers/recipes.controller.js";
+} from "../controllers/recipesControllers.js";
 import {verifyAdmin,verifyToken} from "../middlewares/auth.js";
 
 const recipeRouter = express.Router();

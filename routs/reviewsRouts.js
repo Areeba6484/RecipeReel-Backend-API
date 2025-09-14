@@ -6,7 +6,7 @@ import {
   deleteReviewById,
   deleteAllReviews,
    updateReviewById
-} from "../controllers/reviews.controller.js";
+} from "../controllers/reviewsControllers.js";
 import {verifyAdmin,verifyToken} from "../middlewares/auth.js";
 
 const reviewRouter = express.Router();

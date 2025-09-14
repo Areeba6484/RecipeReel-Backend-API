@@ -9,7 +9,7 @@ import {
   deleteUsers,
   deleteAllUsers,
   verifyOTP
-} from "../controllers/users.controllers.js";
+} from "../controllers/usersControllers.js";
 import { verifyAdmin, verifyToken } from "../middlewares/auth.js";
 
 const userRouter = express.Router();

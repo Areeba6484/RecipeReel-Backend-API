@@ -6,7 +6,7 @@ import {
     updateCategory,
     deleteCategory,
     deleteAllCategories
-} from "../controllers/category.controller.js";
+} from "../controllers/categoryControllers.js";
 import {verifyAdmin,verifyToken} from "../middlewares/auth.js";
 
 const categoryRouter = express.Router();

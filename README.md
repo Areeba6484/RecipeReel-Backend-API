@@ -103,19 +103,29 @@ npm install
 
 ### 3. Set Up Environment Variables
 
-Create a `.env` file using the provided `.example.env`:
+Create a `.env` file:
+ <!-- using the provided `.example.env`: -->
 
 ```env
 PORT=5000
 HOST=localhost
-MONGODB_URI=mongodb://localhost:27017/recipe_app
+DB_HOST=localhost
+MONGODB_URI="mongodb://localhost:27017/backend_api_db_nxb_dev"
+# MONGODB_URI="mongodb+srv://Areeba:Areeba6484@cluster0.ezclzgk.mongodb.net/recipe_reel?retryWrites=true&w=majority"
 
-WEBAPP_URL=http://localhost:8081
+WEBAPP_URL="http://localhost:8081"
 
-JWT_SECRET=your_jwt_secret_key
-JWT_EXPIRES_IN=1h
-JWT_ISSUER=your_jwt_issuer
-JWT_AUDIENCE=your_jwt_audience
+JWT_SECRET="your_jwt_secret_key"
+JWT_EXPIRES_IN="1h"
+JWT_ISSUER="your_jwt_issuer"
+JWT_AUDIENCE="your_jwt_audience"
+
+EMAIL_HOST="sandbox.smtp.mailtrap.io"
+EMAIL_PORT=2525
+EMAIL_USER="01d2c2ade88419"
+EMAIL_PASSWORD="f3f6fc1216a55d"
+EMAIL_FROM="noreply@example.com"
+EMAIL_FROM_NAME="No Reply"
 ```
 
 ### 4. Run the Development Server

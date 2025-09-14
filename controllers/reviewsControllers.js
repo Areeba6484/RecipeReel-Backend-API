@@ -1,4 +1,4 @@
-import Review from "../models/reviews.models.js";
+import Review from "../models/reviewsModels.js";
 
 // ✅ Get all reviews
 export const getAllReviews = async (req, res) => {
